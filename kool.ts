@@ -47,6 +47,7 @@ const completionSpec: Fig.Spec = {
 
             return {
               name: "artisan",
+              debounce: true,
               subcommands,
             };
           },
