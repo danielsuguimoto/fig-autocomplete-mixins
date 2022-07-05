@@ -6,50 +6,48 @@ const completionSpec: Fig.Spec = {
       subcommands: [
         {
           name: "artisan",
-          generateSpec: async (tokens, executeShellCommand) => {
-            var out = await executeShellCommand("kool run artisan list --format=json");
-            const subcommands = [];
-
-            try {
-              const commandDefinition = JSON.parse(out);
-
-              commandDefinition.commands.map((command) => {
-                subcommands.push({
+          args: {
+            name: "command",
+            generators: {
+              script: "kool run artisan list --format=json",
+              cache: {
+                strategy: "stale-while-revalidate",
+                ttl: 1000 * 60 * 60,
+              },
+              postProcess: function (out) {
+                return JSON.parse(out).commands.map((command) => ({
                   name: command.name,
                   description: command.description,
-                  args: Object.keys(command.definition.arguments).map((argumentKey) => {
-                    const argument = command.definition.arguments[argumentKey];
+                  args: Object.keys(command.definition.arguments).map(
+                    (argumentKey) => {
+                      const argument =
+                        command.definition.arguments[argumentKey];
 
-                    return {
-                      name: argument.name,
-                      description: argument.description,
-                      isOptional: !argument.is_required,
-                    };
-                  }),
-                  options: Object.keys(command.definition.options).map((optionKey) => {
-                    const option = command.definition.options[optionKey];
-                    const names = [option.name];
-
-                    if (option.shortcut !== "") {
-                      names.push(option.shortcut);
+                      return {
+                        name: argument.name,
+                        description: argument.description,
+                        isOptional: !argument.is_required,
+                      };
                     }
+                  ),
+                  options: Object.keys(command.definition.options).map(
+                    (optionKey) => {
+                      const option = command.definition.options[optionKey];
+                      const names = [option.name];
 
-                    return {
-                      name: names,
-                      description: option.description,
-                    };
-                  }),
-                });
-              });
-            } catch (err) {
-              //
-            }
+                      if (option.shortcut !== "") {
+                        names.push(option.shortcut);
+                      }
 
-            return {
-              name: "artisan",
-              debounce: true,
-              subcommands,
-            };
+                      return {
+                        name: names,
+                        description: option.description,
+                      };
+                    }
+                  ),
+                }));
+              },
+            },
           },
         },
         {
@@ -76,7 +74,7 @@ const completionSpec: Fig.Spec = {
           name: "php",
           loadSpec: "php",
         },
-      ]
+      ],
     },
   ],
 };
